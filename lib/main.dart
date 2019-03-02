@@ -63,6 +63,16 @@ class _MainPageState extends State<MainPage> {
             children: <Widget>[
               _buildTableCalendar(),
               const SizedBox(height: 8.0),
+              Text(
+                'Your Journals', 
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20.0,
+                  decoration: TextDecoration.combine([
+                    TextDecoration.underline,
+                  ])
+                ),
+              ),
               Expanded(child: _buildJournalList()),
             ],
           ),
@@ -104,7 +114,7 @@ class _MainPageState extends State<MainPage> {
         border: new BorderDirectional(
             bottom: new BorderSide(
               color: Colors.black54,
-              width: 5.0,
+              width: 2.0,
               style: BorderStyle.solid
             ),
 
@@ -134,6 +144,13 @@ class _MainPageState extends State<MainPage> {
   }
 
   Widget _buildJournalList() {
+    if (_selectedJournals.isEmpty){
+      return Padding(
+        padding: EdgeInsets.all(20.0),
+        child: Text("Looks like you don't have any journals for this day! Tap the button below to start an entry!", textAlign: TextAlign.center,)
+      );
+    }
+    // return Text(_selectedJournals.toString());
     return ListView(
       children: _selectedJournals
           .map((journal) => Container(

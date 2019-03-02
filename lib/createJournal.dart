@@ -18,11 +18,17 @@ class _CreateJournalState extends State<CreateJournalPage> {
   // var doc = NotusDocument();
   var notusDoc = NotusDocument();
   final _titleController = TextEditingController();
+  final _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     _titleController.text = 'Journal Entry for ' + widget.formatter.format(widget.date).toString();
+     _focusNode.addListener(() {
+    if(_focusNode.hasFocus) {
+      _titleController.selection = TextSelection(baseOffset: 0, extentOffset: _titleController.text.length);
+    }
+  });
   }
 
   @override
@@ -33,6 +39,11 @@ class _CreateJournalState extends State<CreateJournalPage> {
           autofocus: false,
           controller: _titleController,
           decoration: InputDecoration(labelText: 'Title'),
+          focusNode: _focusNode,
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0.0,16.0,0.0,0.0),
+          child: Text('Journal Entry:'),
         ),
         Padding(
           padding: const EdgeInsets.all(16.0),
