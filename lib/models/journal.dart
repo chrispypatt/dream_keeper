@@ -29,6 +29,12 @@ class Journal {
         title: json["title"],
         journalEntry: json["journal_entry"],
     );
+    
+    factory Journal.fromParams(DateTime _datetime, String _title, String _journalEntry) => new Journal(
+      datetime: _datetime,
+      title: _title,
+      journalEntry: _journalEntry,
+    );
 
     Map<String, dynamic> toMap() => {
         "id": id,

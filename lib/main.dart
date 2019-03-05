@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:dream_keeper/createJournal.dart';
+import 'package:dream_keeper/viewJournal.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:dream_keeper/models/journal.dart';
 import 'package:dream_keeper/stores/db.dart';
@@ -109,16 +110,14 @@ class _MainPageState extends State<MainPage> {
     );
     setState(() { 
       if (result!=null){
-        Journal journal = new Journal();
-        journal.datetime = _selectedDay;
-        journal.journalEntry = result['journal'];
-        journal.title =result['title'];
+        Journal newJournal = result['journal'];
         if (_journals[_selectedDay] == null){
           _journals[_selectedDay] = [];
         }
-        _journals[_selectedDay].add(journal);
+        _journals[_selectedDay].add(newJournal);
+        _selectedJournals = [];
         _selectedJournals = _journals[_selectedDay];
-        DBProvider.db.newJournal(journal);
+        DBProvider.db.newJournal(newJournal);
       }
     });
   }
@@ -185,7 +184,7 @@ class _MainPageState extends State<MainPage> {
                   delegate: new SlidableDrawerDelegate(),
                   child: ListTile(
                     title: Text(journal.title, style: TextStyle(color: Colors.white),),
-                    onTap: () => print('$journal tapped!'),
+                    onTap: () => { viewJournalPressed(context,journal) },
                   ),
                   secondaryActions: <Widget>[
                     new Container(
@@ -196,13 +195,15 @@ class _MainPageState extends State<MainPage> {
                             offset: Offset(1.0, 2.0)
                           )
                         ],
-                        borderRadius: BorderRadius.circular(12.0),
-                        color: Colors.blue,
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(12.0),
+                          bottomRight: Radius.circular(12.0),
+                        ),
+                        color: Colors.red,
                       ),
                       child: IconSlideAction(
-                      
                         caption: 'Delete',
-                        color: Colors.red,
+                        color: Colors.red.withOpacity(0.0),
                         icon: Icons.delete,
                         onTap: () {
                           setState(() {
@@ -215,6 +216,15 @@ class _MainPageState extends State<MainPage> {
               )
             )
           ).toList(),
+    );
+  }
+
+  void viewJournalPressed(BuildContext context, journal){
+    print('$journal tapped!');
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => 
+        ViewJournalPage(journal: journal))
     );
   }
 

@@ -2,6 +2,8 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:dream_keeper/richEditor.dart';
 import 'package:zefyr/zefyr.dart';
+import 'package:dream_keeper/models/journal.dart';
+import 'dart:convert';
 
 class CreateJournalPage extends StatefulWidget{
   CreateJournalPage({Key key, this.title, this.date}) : super(key: key);
@@ -24,11 +26,11 @@ class _CreateJournalState extends State<CreateJournalPage> {
   void initState() {
     super.initState();
     _titleController.text = 'Journal Entry for ' + widget.formatter.format(widget.date).toString();
-     _focusNode.addListener(() {
-    if(_focusNode.hasFocus) {
-      _titleController.selection = TextSelection(baseOffset: 0, extentOffset: _titleController.text.length);
-    }
-  });
+    _focusNode.addListener(() {
+      if(_focusNode.hasFocus) {
+        _titleController.selection = TextSelection(baseOffset: 0, extentOffset: _titleController.text.length);
+      }
+    });
   }
 
   @override
@@ -43,13 +45,22 @@ class _CreateJournalState extends State<CreateJournalPage> {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(0.0,10.0,0.0,10.0),
-          child: Text('Journal Entry:'),
+          child: Text('Tap to edit entry:'),
         ),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ZefyrView(
-            document: notusDoc,
-            imageDelegate: new CustomImageDelegate(),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Colors.black,
+              width: 0.5,
+            ),
+            borderRadius: BorderRadius.all(Radius.circular(12.0)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ZefyrView(
+              document: notusDoc,
+              imageDelegate: new CustomImageDelegate(),
+            ),
           ),
         ),
       ],
@@ -78,31 +89,23 @@ class _CreateJournalState extends State<CreateJournalPage> {
             ),
           ],
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: form,
-        ),
-        bottomNavigationBar: ButtonBar(
-          alignment: MainAxisAlignment.center,
-          children: <Widget>[
-            RaisedButton(
-              onPressed: () {
-                richEditorbutton(context);
-              },
-              child: new Text('Edit Journal Entry'),
-              color: Colors.blue,
-              textColor: Colors.white,
-            )
-          ],
+        body: new GestureDetector(
+          onTap: (){
+            richEditorbutton(context);
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: form,
+          ),
         ),
       ),
     );
   }
 
   void _save(){
-    Map<String,String> newEvent = {
-      'title': _titleController.text,
-      'journal':notusDoc.toString() 
+    Journal newJournal = new Journal.fromParams(widget.date,_titleController.text,json.encode(notusDoc.toJson()));
+    Map<String,dynamic> newEvent = {
+      'journal': newJournal
     };
     Navigator.pop(context, newEvent);
   }
