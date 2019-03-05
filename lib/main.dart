@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:dream_keeper/createJournal.dart';
 import 'package:table_calendar/table_calendar.dart';
-
+import 'package:dream_keeper/models/journal.dart';
+import 'package:dream_keeper/stores/db.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 void main() async {
   runApp(new DreamKeeperApp());
@@ -37,7 +39,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   DateTime _selectedDay;
-  Map<DateTime, List> _journals;
+  Map<DateTime, List<Journal>> _journals;
   List _selectedJournals;
 
   @override
@@ -45,8 +47,6 @@ class _MainPageState extends State<MainPage> {
     super.initState();
     final now = DateTime.now();
     _selectedDay = DateTime(now.year, now.month, now.day);
-    _journals = getJournals(); 
-    _selectedJournals = _journals[_selectedDay] ?? [];
   }
     
   @override
@@ -58,23 +58,34 @@ class _MainPageState extends State<MainPage> {
             title: Text(widget.title),
           ),
           resizeToAvoidBottomPadding: false,
-          body: Column(
-            mainAxisSize: MainAxisSize.max,
-            children: <Widget>[
-              _buildTableCalendar(),
-              const SizedBox(height: 8.0),
-              Text(
-                'Your Journals', 
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20.0,
-                  decoration: TextDecoration.combine([
-                    TextDecoration.underline,
-                  ])
-                ),
-              ),
-              Expanded(child: _buildJournalList()),
-            ],
+          body:  FutureBuilder<List<Journal>>(
+            future: DBProvider.db.getAllJournals(),
+            builder: (BuildContext context, AsyncSnapshot<List<Journal>> snapshot) {
+              // if (snapshot.hasData) {
+                _journals = parseJournals(snapshot.data);
+                _selectedJournals = _journals[_selectedDay] ?? [];
+                return Column(
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    _buildTableCalendar(),
+                    const SizedBox(height: 8.0),
+                    Text(
+                      'Your Journals', 
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20.0,
+                        decoration: TextDecoration.combine([
+                          TextDecoration.underline,
+                        ])
+                      ),
+                    ),
+                    Expanded(child: _buildJournalList()),
+                  ],
+                );
+              // }else{
+              //   return Center(child: CircularProgressIndicator());
+              // }
+            }
           ),
           floatingActionButton: new FloatingActionButton(
             onPressed: () {
@@ -98,11 +109,16 @@ class _MainPageState extends State<MainPage> {
     );
     setState(() { 
       if (result!=null){
+        Journal journal = new Journal();
+        journal.datetime = _selectedDay;
+        journal.journalEntry = result['journal'];
+        journal.title =result['title'];
         if (_journals[_selectedDay] == null){
           _journals[_selectedDay] = [];
         }
-        _journals[_selectedDay].add(result);
-        _selectedJournals =_journals[_selectedDay];
+        _journals[_selectedDay].add(journal);
+        _selectedJournals = _journals[_selectedDay];
+        DBProvider.db.newJournal(journal);
       }
     });
   }
@@ -165,17 +181,68 @@ class _MainPageState extends State<MainPage> {
                   color: Colors.blue,
                 ),
                 margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                child: ListTile(
-                  title: Text(journal['title'], style: TextStyle(color: Colors.white),),
-                  onTap: () => print('$journal tapped!'),
-                ),
-              ))
-          .toList(),
+                child: Slidable(
+                  delegate: new SlidableDrawerDelegate(),
+                  child: ListTile(
+                    title: Text(journal.title, style: TextStyle(color: Colors.white),),
+                    onTap: () => print('$journal tapped!'),
+                  ),
+                  secondaryActions: <Widget>[
+                    new Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          new BoxShadow(
+                            color: Colors.black38,
+                            offset: Offset(1.0, 2.0)
+                          )
+                        ],
+                        borderRadius: BorderRadius.circular(12.0),
+                        color: Colors.blue,
+                      ),
+                      child: IconSlideAction(
+                      
+                        caption: 'Delete',
+                        color: Colors.red,
+                        icon: Icons.delete,
+                        onTap: () {
+                          setState(() {
+                            removeJournal(journal);
+                          });
+                        }
+                      ),
+                    )
+                  ]
+              )
+            )
+          ).toList(),
     );
   }
 
-  Map<DateTime, List> getJournals() {
-    return Map<DateTime, List>();
+  void removeJournal(journal){
+    _journals[_selectedDay].removeWhere((item) => item.id == journal.id);
+    _selectedJournals = _journals[_selectedDay];
+    DBProvider.db.deleteJournal(journal.id);
+  }
+
+  Map<DateTime, List<Journal>> getJournals() {
+    Map<DateTime, List<Journal>> journalMap;
+    DBProvider.db.getAllJournals().then((journalList) =>{
+      journalMap = parseJournals(journalList)
+    });
+    return journalMap;
+  }
+
+  Map<DateTime, List<Journal>> parseJournals(journalList){
+    Map<DateTime, List<Journal>> journalMap = Map<DateTime, List<Journal>>();
+    if (journalList!=null){
+      for (var journal in journalList) {
+        if (journalMap[journal.datetime] == null){
+          journalMap[journal.datetime] = [];
+        }
+        journalMap[journal.datetime].add(journal);
+      }
+    }
+    return journalMap;
   }
 }
     

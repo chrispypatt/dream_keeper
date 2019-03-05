@@ -42,7 +42,7 @@ class _CreateJournalState extends State<CreateJournalPage> {
           focusNode: _focusNode,
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(0.0,16.0,0.0,0.0),
+          padding: const EdgeInsets.fromLTRB(0.0,10.0,0.0,10.0),
           child: Text('Journal Entry:'),
         ),
         Padding(
